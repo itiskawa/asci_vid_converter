@@ -12,6 +12,7 @@ import PIL.ImageFont
 import PIL.ImageOps
 import PIL.ImageDraw
 import ffmpeg
+import shutil
 
 #picture = Image.open('vald.png') 
 
@@ -164,15 +165,18 @@ def convert_text_files_to_video(txt_files_path, img_files_path, out_path, num_te
     out.release()
         
 def run_from_file(input_path):
-    txt_files_path = "temp/text_frames/"
-    img_files_path = "temp/image_frames/"
+    temp_file_path = ".temp/"
+    txt_files_path = temp_file_path + "text_frames/"
+    img_files_path = temp_file_path + "image_frames/"
 
     out_path = "output/"
     #os.mkdir(out_path)
-    #os.makedirs(txt_files_path)
-    #os.makedirs(img_files_path)
+    os.makedirs(txt_files_path)
+    os.makedirs(img_files_path)
     num_frame = convert_video_to_text_files(input_path, txt_files_path)
     convert_text_files_to_video(txt_files_path, img_files_path, out_path, num_frame)
+    shutil.rmtree(temp_file_path) 
+
 
 run_from_file('input/mister v.MOV')
 #run_from_webcam()
