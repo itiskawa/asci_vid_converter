@@ -2,6 +2,8 @@
 
 This program takes an entry as a video clip (all standard formats accepted by OpenCV), and returns an .avi file of ASCII art.
 
+The whole code is available on the _master_ branch.
+
 Libraries Used: 
 - PIL
 - OpenCV
