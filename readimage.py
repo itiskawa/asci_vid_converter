@@ -120,7 +120,7 @@ def text_image(text_path, font_path=None):
     os.system('clear') """
     
 a = get_frames('mister v.MOV')
-print("frames = ", len(a))
+
 i = 0
 for frame in a:     
     i += 1
@@ -130,8 +130,10 @@ for frame in a:
 
 images = []
 
+print("frames = ", len(a))
+
 i = 0
-for filename in os.listdir('frames'):
+for filename in os.listdir(images):
     i += 1
     image = text_image('frames/'+filename)
     images.append(image)
@@ -146,12 +148,14 @@ for filename in os.listdir('frames'):
     #out.write(np.array(image))
 
 #out.release()
+""" def convert_to_vid():
+    stream = None
+    stream = ffmpeg.input('frame_images/image%03d.png',pattern_type='glob' ,framerate=24)
+    stream = ffmpeg.output(stream, 'output.avi')
+    ffmpeg.run_async(stream)
+    stream = None
 
-(ffmpeg
-    .input('frame_images/image%03d.png' ,framerate=24)
-    .output('video2.avi')
-    .run()
-)
+convert_to_vid() """
      
 
 
