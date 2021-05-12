@@ -15,36 +15,37 @@ import ffmpeg
 
 #picture = Image.open('vald.png') 
 
-ASCIIS = ['@', '#', 'S', '%', '?', '*', '+', ';', ':', ',', '.']
+ASCIIS = ['@', '#', 'S', '%', '?', '*', '+', ';', ':', ',', '.', ' ']
 PIXEL_ON = 0  # PIL color to use for "on"
 PIXEL_OFF = 255  # PIL color to use for "off"
+IMAGE_WIDTH = 100
 
 def resize_image(picture):
     width, height = picture.size
-    newWidth = 100
-    newHeight = int((newWidth/width) * height)
-    #print(newHeight)
-    return picture.resize((newWidth, newHeight))
+    newHeight = int((IMAGE_WIDTH/width) * height)
+    return picture.resize((IMAGE_WIDTH, newHeight))
 
 def getsize(image):
     return image.size
-#video = cv2.VideoCapture('-----')
 
 def convert_to_gray(image):
     return image.convert('L')
-
-
 
 #graypic = convert_to_gray(resize_image(picture))
 
 # min value is 0, max is 256
 def ascii_convert(image):
     pixels = image.getdata()
+    max_pixel = max(pixels)
+    min_pixel = min(pixels)
+    pixel_range = max_pixel - min_pixel
+    ascii_range = len(ASCIIS) - 1
     chars = ""
     for i in range(len(pixels)):
-        if i %100 == 0:
+        if i % IMAGE_WIDTH == 0:
             chars += '\n'
-        chars += (ASCIIS[pixels[i]//25])
+        map_index = round((pixels[i] - min_pixel) / pixel_range * ascii_range)
+        chars += (ASCIIS[map_index])
     return chars
 
 def print_to_file(chars, filename):
@@ -119,48 +120,59 @@ def text_image(text_path, font_path=None):
     for frame in frames:
     os.system('clear') """
     
-a = get_frames('mister v.MOV')
+def run_from_webcam():
+    cap = cv2.VideoCapture(0)
+    fourcc = cv2.VideoWriter_fourcc(*'XVID')
+    while(cap.isOpened() ):
+        ret, frame = cap.read()
+        if ret == True:
+            frame = cv2.flip(frame,1)  
+            frame_img = Image.fromarray(frame)
+            print(ascii_convert(convert_to_gray(resize_image(frame_img)))) 
+        else:
+            break
+    cap.release()
 
-i = 0
-for frame in a:     
-    i += 1
-    os.system('clear')
-    #print(ascii_convert(convert_to_gray(resize_image(frame)))) 
-    print_to_file(ascii_convert(convert_to_gray(resize_image(frame))), 'frames/'+str(i))
+def convert_video_to_text_files(input_path, temp_path):
+    a = get_frames(input_path)
+    i = 0
+    for frame in a:     
+        #print(ascii_convert(convert_to_gray(resize_image(frame)))) 
+        #os.system('clear')
+        print_to_file(ascii_convert(convert_to_gray(resize_image(frame))), temp_path + str(i))
+        i += 1
+    return i
 
-images = []
+def convert_text_files_to_video(txt_files_path, img_files_path, out_path, num_text_files):
+    image_paths = []
+    for i in range(num_text_files):
+        image = text_image(txt_files_path + str(i))
+        filepath = img_files_path + str(i)+".png"
+        image.save(fp= filepath)
+        image_paths.append(filepath)
 
-print("frames = ", len(a))
+    vidpath = out_path + 'video.avi'
+    w, h, _ = cv2.imread(image_paths[0]).shape
+    fourcc = cv2.VideoWriter_fourcc(*"MJPG")
 
-i = 0
-for filename in os.listdir(images):
-    i += 1
-    image = text_image('frames/'+filename)
-    images.append(image)
-    image.save(fp= 'frame_images/image{:03}.png'.format(i))
-#vidpath = 'video.avi'
+    fps = 20
+    out = cv2.VideoWriter(vidpath, fourcc, fps, (h, w))
 
-#out = cv2.VideoWriter(vidpath,cv2.VideoWriter_fourcc(*'mp4v'),1, getsize(images[0]))
+    for filepath in image_paths:
+        img = cv2.imread(filepath)
+        out.write(img)
+    out.release()
+        
+def run_from_file(input_path):
+    txt_files_path = "temp/text_frames/"
+    img_files_path = "temp/image_frames/"
 
+    out_path = "output/"
+    #os.mkdir(out_path)
+    #os.makedirs(txt_files_path)
+    #os.makedirs(img_files_path)
+    num_frame = convert_video_to_text_files(input_path, txt_files_path)
+    convert_text_files_to_video(txt_files_path, img_files_path, out_path, num_frame)
 
-
-    #i = cv2.imread(image)}
-    #out.write(np.array(image))
-
-#out.release()
-""" def convert_to_vid():
-    stream = None
-    stream = ffmpeg.input('frame_images/image%03d.png',pattern_type='glob' ,framerate=24)
-    stream = ffmpeg.output(stream, 'output.avi')
-    ffmpeg.run_async(stream)
-    stream = None
-
-convert_to_vid() """
-     
-
-
-
-
-
-
-#print_to_file(ascii_convert(convert_to_gray(resize_image(picture))), 'ascii_image.txt')
+run_from_file('input/mister v.MOV')
+#run_from_webcam()
