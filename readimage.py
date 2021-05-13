@@ -117,13 +117,8 @@ def text_image(text_path, font_path=None):
     image = image.crop(c_box)
     return image
 
-""" def do_something(frames):
-    for frame in frames:
-    os.system('clear') """
-    
-def run_from_webcam():
+def run_from_webcam_to_console():
     cap = cv2.VideoCapture(0)
-    fourcc = cv2.VideoWriter_fourcc(*'XVID')
     while(cap.isOpened() ):
         ret, frame = cap.read()
         if ret == True:
@@ -152,7 +147,7 @@ def convert_text_files_to_video(txt_files_path, img_files_path, out_path, num_te
         image.save(fp= filepath)
         image_paths.append(filepath)
 
-    vidpath = out_path + 'video.avi'
+    
     w, h, _ = cv2.imread(image_paths[0]).shape
     fourcc = cv2.VideoWriter_fourcc(*"MJPG")
 
@@ -175,11 +170,62 @@ def run_from_file(input_path):
 
     os.makedirs(txt_files_path)
     os.makedirs(img_files_path)
-    
+
     num_frame = convert_video_to_text_files(input_path, txt_files_path)
     convert_text_files_to_video(txt_files_path, img_files_path, out_path, num_frame)
     shutil.rmtree(temp_file_path) 
 
+def run_from_webcam_to_video():
+    
+    temp_file_path = ".temp/"
+    out_path = "output/"
 
-run_from_file('input/mister v.MOV')
-#run_from_webcam()
+    if not os.path.isdir(temp_file_path):
+        os.makedirs(temp_file_path)
+    if not os.path.isdir(out_path):
+        os.mkdir(out_path)
+    cap = cv2.VideoCapture(0)
+
+    start = time.time()
+
+    count = 0
+    try:
+        while(cap.isOpened() ):
+            ret, frame = cap.read()
+            if ret == True:
+                frame = cv2.flip(frame,1)  
+                frame_img = Image.fromarray(frame)
+                filepath = temp_file_path + str(count)
+                print_to_file(ascii_convert(convert_to_gray(resize_image(frame_img))), filepath)
+                count+=1
+
+            else:
+                break
+    except KeyboardInterrupt:
+        end = time.time()
+        seconds = end - start
+        fps  = count / seconds
+
+        text_image(temp_file_path + "0").save(fp= temp_file_path +"size.png")
+        w, h, _ = cv2.imread(temp_file_path +"size.png").shape
+        vidpath = out_path + 'encoded_webcam.avi'
+        fourcc = cv2.VideoWriter_fourcc(*"MJPG")
+        out = cv2.VideoWriter(vidpath, fourcc, fps, (h, w))
+
+        i = 0
+        while(i < count):
+            filepath = temp_file_path + str(i)
+            image = text_image(filepath)
+            filepath = temp_file_path + "img_frame.png"
+            image.save(fp= filepath)
+            img = cv2.imread(filepath)
+            out.write(img)
+            i +=1
+        cap.release()
+        out.release()
+        shutil.rmtree(temp_file_path) 
+
+
+#run_from_file('input/mister v.MOV')
+#run_from_webcam_to_console()
+run_from_webcam_to_video()
