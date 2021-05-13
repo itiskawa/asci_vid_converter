@@ -117,18 +117,6 @@ def text_image(text_path, font_path=None):
     image = image.crop(c_box)
     return image
 
-def run_from_webcam_to_console():
-    cap = cv2.VideoCapture(0)
-    while(cap.isOpened() ):
-        ret, frame = cap.read()
-        if ret == True:
-            frame = cv2.flip(frame,1)  
-            frame_img = Image.fromarray(frame)
-            print(ascii_convert(convert_to_gray(resize_image(frame_img)))) 
-        else:
-            break
-    cap.release()
-
 def convert_video_to_text_files(input_path, temp_path):
     a = get_frames(input_path)
     i = 0
@@ -158,7 +146,32 @@ def convert_text_files_to_video(txt_files_path, img_files_path, out_path, num_te
         img = cv2.imread(filepath)
         out.write(img)
     out.release()
-        
+
+def choose_ascii(font_path = None):
+    large_font = 20  # get better resolution with larger size
+    font_path = font_path or 'cour.ttf'  # Courier New. works in windows. linux may need more explicit path
+    try:
+        font = PIL.ImageFont.truetype(font_path, size=large_font)
+    except IOError:
+        font = PIL.ImageFont.load_default()
+        #print('Could not use chosen font. Using default.')
+
+    characters = list(set(input("Choose your character:")))
+    coverage = []
+    for char in characters:
+        w, h = font.getsize(char)  
+        h *= 2
+        image = Image.new('L', (w, h), 1) 
+        draw = ImageDraw.Draw(image)
+        draw.text((0, 0), char, font=font) 
+        arr = np.asarray(image)
+        arr = np.where(arr, 0, 1)
+        number_black_pixel = np.sum(arr)
+        coverage.append(number_black_pixel)
+    
+    sort_index = np.argsort(coverage)[::-1]
+    return [characters[idx] for idx in sort_index]
+         
 def run_from_file(input_path):
     temp_file_path = ".temp/"
     txt_files_path = temp_file_path + "text_frames/"
@@ -225,7 +238,21 @@ def run_from_webcam_to_video():
         out.release()
         shutil.rmtree(temp_file_path) 
 
+def run_from_webcam_to_console():
+    cap = cv2.VideoCapture(0)
+    try:
+        while(cap.isOpened() ):
+            ret, frame = cap.read()
+            if ret == True:
+                frame = cv2.flip(frame,1)  
+                frame_img = Image.fromarray(frame)
+                print(ascii_convert(convert_to_gray(resize_image(frame_img)))) 
+            else:
+                break
+    except KeyboardInterrupt:
+        cap.release()
 
+ASCIIS = choose_ascii()
 #run_from_file('input/mister v.MOV')
-#run_from_webcam_to_console()
-run_from_webcam_to_video()
+run_from_webcam_to_console()
+#run_from_webcam_to_video()
