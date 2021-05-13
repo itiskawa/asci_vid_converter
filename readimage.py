@@ -170,9 +170,12 @@ def run_from_file(input_path):
     img_files_path = temp_file_path + "image_frames/"
 
     out_path = "output/"
-    #os.mkdir(out_path)
+    if not os.path.isdir(out_path):
+        os.mkdir(out_path)
+
     os.makedirs(txt_files_path)
     os.makedirs(img_files_path)
+    
     num_frame = convert_video_to_text_files(input_path, txt_files_path)
     convert_text_files_to_video(txt_files_path, img_files_path, out_path, num_frame)
     shutil.rmtree(temp_file_path) 
